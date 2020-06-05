@@ -219,7 +219,7 @@ if __name__ == '__main__':
     print('Called with args:')
     print(args)
 
-    assert args.dataset == "uav"
+    assert args.dataset == "visdrone"
     args.imdb_name = "uav_2017_trainval"
     args.imdbval_name = "uav_2017_test"
     args.set_cfgs = ['ANCHOR_SCALES', '[1, 2, 4, 8, 16]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '107']

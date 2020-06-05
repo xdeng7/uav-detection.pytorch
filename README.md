@@ -1,4 +1,4 @@
-# A *Faster* Pytorch Implementation of Faster R-CNN
+# VisDrone Detection 2019 
 
 ## Write at the beginning
 
