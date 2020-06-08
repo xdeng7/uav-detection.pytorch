@@ -114,7 +114,7 @@ if __name__ == '__main__':
     assert args.dataset == "visdrone"
     args.imdb_name = "visdrone_2019_train"
     args.imdbval_name = "visdrone_2019_val"
-    args.set_cfgs = ['ANCHOR_SCALES', '[1, 2, 4, 8, 16]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '107']
+    args.set_cfgs = ['ANCHOR_SCALES', '[1, 2, 4, 8, 16]', 'ANCHOR_RATIOS', '[0.25,0.5,1,2]', 'MAX_NUM_GT_BOXES', '107']
 
     if args.cfg_file is not None:
         cfg_from_file(args.cfg_file)

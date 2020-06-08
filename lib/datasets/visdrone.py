@@ -47,7 +47,7 @@ class visdrone(imdb):
         self._devkit_path = self._get_default_path() if devkit_path is None \
             else devkit_path
         self._data_path = os.path.join(self._devkit_path, 'VisDrone2019-DET-' + self._image_set)
-        self._classes = ('pedestrian', 'person', 'bicycle', 'car', 'van',
+        self._classes = ('ignored regions', 'pedestrian', 'person', 'bicycle', 'car', 'van',
                          'truck', 'tricycle', 'awning-tricycle', 'bus',
                          'motor', 'others')
         print("num classes:", len(self.classes))  
@@ -114,7 +114,7 @@ class visdrone(imdb):
         Construct an image path from the image's "index" identifier.
         """
         image_path = os.path.join(self._data_path, 'images',
-                                  index)
+                                  index + self._image_ext)
         assert os.path.exists(image_path), \
             'Path does not exist: {}'.format(image_path)
         return image_path
@@ -147,11 +147,11 @@ class visdrone(imdb):
         This function loads/saves from/to a cache file to speed up future calls.
         """
         cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
-        if os.path.exists(cache_file):
-            with open(cache_file, 'rb') as fid:
-                roidb = pickle.load(fid)
-            print('{} gt roidb loaded from {}'.format(self.name, cache_file))
-            return roidb
+        # if os.path.exists(cache_file):
+        #     with open(cache_file, 'rb') as fid:
+        #         roidb = pickle.load(fid)
+        #     print('{} gt roidb loaded from {}'.format(self.name, cache_file))
+        #     return roidb
 
         gt_roidb = [self._load_pascal_annotation(index)
                     for index in self.image_index]
@@ -232,17 +232,11 @@ class visdrone(imdb):
         Load image and bounding boxes info from XML file in the PASCAL VOC
         format.
         """
-        filename = os.path.join(self._data_path, 'annotations', index + '.xml')
-        tree = ET.parse(filename)
-        objs = tree.findall('object')
-        # if not self.config['use_diff']:
-        #     # Exclude the samples labeled as difficult
-        #     non_diff_objs = [
-        #         obj for obj in objs if int(obj.find('difficult').text) == 0]
-        #     # if len(non_diff_objs) != len(objs):
-        #     #     print 'Removed {} difficult objects'.format(
-        #     #         len(objs) - len(non_diff_objs))
-        #     objs = non_diff_objs
+        filename = os.path.join(self._data_path, 'annotations', index + '.txt')
+        with open(filename, 'r') as f:
+            objs = f.read().splitlines()
+        # tree = ET.parse(filename)
+        # objs = tree.findall('object')
         num_objs = len(objs)
 
         boxes = np.zeros((num_objs, 4), dtype=np.uint16)
@@ -252,23 +246,18 @@ class visdrone(imdb):
         seg_areas = np.zeros((num_objs), dtype=np.float32)
         ishards = np.zeros((num_objs), dtype=np.int32)
 
-        # Load object bounding boxes into a data frame.
+        # # Load object bounding boxes into a data frame.
         for ix, obj in enumerate(objs):
-            bbox = obj.find('bndbox')
-            # Make pixel indexes 0-based
-            x1 = float(bbox.find('xmin').text)# - 1
-            y1 = float(bbox.find('ymin').text)# - 1
-            x2 = float(bbox.find('xmax').text)# - 1
-            y2 = float(bbox.find('ymax').text)# - 1
+            ann_info = obj.split(',')
+            x1, y1 = float(ann_info[0]), float(ann_info[1])
+            w, h = float(ann_info[2]), float(ann_info[3])
+            x2, y2 = x1 + w, y1 + h
+            cls_id = int(ann_info[5])
 
-            diffc = obj.find('difficult')
-            difficult = 0 if diffc == None else int(diffc.text)
-            ishards[ix] = difficult
-
-            cls = self._class_to_ind[obj.find('name').text.lower().strip()]
-            boxes[ix, :] = [x1, y1, x2, y2]
-            gt_classes[ix] = cls
-            overlaps[ix, cls] = 1.0
+            diffc = 0
+            boxes[ix,:] = [x1, y1, x2, y2]
+            gt_classes[ix] = cls_id
+            overlaps[ix, cls_id] = 1.0
             seg_areas[ix] = (x2 - x1 + 1) * (y2 - y1 + 1)
 
         overlaps = scipy.sparse.csr_matrix(overlaps)
@@ -278,7 +267,9 @@ class visdrone(imdb):
                 'gt_ishard': ishards,
                 'gt_overlaps': overlaps,
                 'flipped': False,
-                'seg_areas': seg_areas}
+                'seg_areas': seg_areas,
+                'name': filename}
+
 
     def _get_comp_id(self):
         comp_id = (self._comp_id + '_' + self._salt if self.config['use_salt']

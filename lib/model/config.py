@@ -75,7 +75,8 @@ __C.TRAIN.BATCH_SIZE = 128
 __C.TRAIN.FG_FRACTION = 0.25
 
 # Overlap threshold for a ROI to be considered foreground (if >= FG_THRESH)
-__C.TRAIN.FG_THRESH = 0.5
+# __C.TRAIN.FG_THRESH = 0.5
+__C.TRAIN.FG_THRESH = 0.4
 
 # Overlap threshold for a ROI to be considered background (class = 0 if
 # overlap in [LO, HI))
@@ -145,7 +146,7 @@ __C.TRAIN.RPN_NMS_THRESH = 0.7
 __C.TRAIN.RPN_PRE_NMS_TOP_N = 12000
 
 # Number of top scoring boxes to keep after applying NMS to RPN proposals
-__C.TRAIN.RPN_POST_NMS_TOP_N = 2000
+__C.TRAIN.RPN_POST_NMS_TOP_N = 10000
 
 # Deprecated (outside weights)
 __C.TRAIN.RPN_BBOX_INSIDE_WEIGHTS = (1.0, 1.0, 1.0, 1.0)

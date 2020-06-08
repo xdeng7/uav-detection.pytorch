@@ -239,6 +239,7 @@ class SolverWrapper(object):
 
     def train_model(self, max_iters):
         # Build data layers for both training and validation set
+
         self.data_layer = RoIDataLayer(self.roidb, self.imdb.num_classes)
         self.data_layer_val = RoIDataLayer(
             self.valroidb, self.imdb.num_classes, random=True)

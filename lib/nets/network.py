@@ -104,6 +104,7 @@ class Network(nn.Module):
                         0)(bottom, rois)
 
     def _anchor_target_layer(self, rpn_cls_score):
+
         rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights = \
           anchor_target_layer(
           rpn_cls_score.data, self._gt_boxes.data.cpu().numpy(), self._im_info, self._feat_stride, self._anchors.data.cpu().numpy(), self._num_anchors)
@@ -490,6 +491,7 @@ class Network(nn.Module):
         return rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, loss
 
     def train_step_with_summary(self, blobs, train_op):
+        # print(blobs['img_name'])
         self.forward(blobs['data'], blobs['im_info'], blobs['gt_boxes'])
         rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, loss = self._losses["rpn_cross_entropy"].item(), \
                                                                             self._losses['rpn_loss_box'].item(), \
