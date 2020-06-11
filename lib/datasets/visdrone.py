@@ -286,13 +286,13 @@ class visdrone(imdb):
         path = os.path.join(filedir, filename)
         return path
 
-    def _write_voc_results_file(self, path, all_boxes):
+    def _write_voc_results_file(self, all_boxes):
         for cls_ind, cls in enumerate(self.classes):
             if cls == '__background__':
                 continue
             print('Writing {} VisDrone results file'.format(cls))
             filename = self._get_voc_results_file_template().format(cls)
-            with open(os.path.join(path, filename), 'wt') as f:
+            with open(filename, 'wt') as f:
                 for im_ind, index in enumerate(self.image_index):
                     dets = all_boxes[cls_ind][im_ind]
                     if dets == []:
@@ -304,18 +304,9 @@ class visdrone(imdb):
                                        dets[k, 0] , dets[k, 1] ,
                                        dets[k, 2] , dets[k, 3] ))
 
-    def _do_python_eval(self, path, output_dir='output'):
-        annopath = os.path.join(
-            self._devkit_path,
-            'VisDrone' + self._year,
-            'Annotations',
-            '{:s}.xml')
-        imagesetfile = os.path.join(
-            self._devkit_path,
-            'VisDrone' + self._year,
-            'ImageSets',
-            'Main',
-            self._image_set + '.txt')
+    def _do_python_eval(self, output_dir='output'):
+        annopath = os.path.join(self._data_path, 'annotations', '{:s}.txt')
+        imagesetfile = os.path.join(self._data_path,self._image_set + '.txt')
         cachedir = os.path.join(self._devkit_path, 'annotations_cache')
         aps = []
         # The PASCAL VOC metric changed in 2010
@@ -324,7 +315,8 @@ class visdrone(imdb):
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
         for i, cls in enumerate(self._classes):
-            if cls == '__background__':
+       
+            if cls == '__background__' or cls == 'ignored regions':
                 continue
             filename = self._get_voc_results_file_template().format(cls)
             rec, prec, ap = voc_eval(
@@ -332,28 +324,31 @@ class visdrone(imdb):
                 use_07_metric=use_07_metric)
             aps += [ap]
             print('AP for {} = {:.4f}'.format(cls, ap))
-            with open(os.path.join(output_dir, cls + '_pr.pkl'), 'w') as f:
-                pickle.dump({'rec': rec, 'prec': prec, 'ap': ap}, f)
+            with open(os.path.join(output_dir, cls + '_pr.pkl'), 'wb') as f:
+                # pickle.dump({'rec': rec, 'prec': prec, 'ap': ap}, f)
+                pickle.dump({ 'ap': ap}, f)
         filename = '_det_' + self._image_set + '_ap.txt'
-        with open(os.path.join(path, filename), 'wt') as f:
+        with open(os.path.join(filename), 'wt') as f:
             f.write('Mean AP = {:.4f}\n'.format(np.mean(aps)))
-        # print('~~~~~~~~')
-        # print('Results:')
-        # for ap in aps:
-        #     print('{:.3f}'.format(ap))
-        # print('{:.3f}'.format(np.mean(aps)))
-        # print('~~~~~~~~')
-        # print('')
-        # print('--------------------------------------------------------------')
-        # print('Results computed with the **unofficial** Python eval code.')
-        # print('Results should be very close to the official MATLAB eval code.')
-        # print('Recompute with `./tools/reval.py --matlab ...` for your paper.')
-        # print('-- Thanks, The Management')
-        # print('--------------------------------------------------------------')
+        print('~~~~~~~~')
+        print('Results:')
+        for i, cls in enumerate(self._classes):
+            if cls == '__background__' or cls == 'ignored regions':
+                continue
+            print('{} : {:.3f}'.format(cls,ap))
+        print('mAP: {:.3f}'.format(np.mean(aps)))
+        print('~~~~~~~~')
+        print('')
+        print('--------------------------------------------------------------')
+        print('Results computed with the **unofficial** Python eval code.')
+        print('Results should be very close to the official MATLAB eval code.')
+        print('Recompute with `./tools/reval.py --matlab ...` for your paper.')
+        print('-- Thanks, The Management')
+        print('--------------------------------------------------------------')
 
-    def evaluate_detections(self, all_boxes, output_dir, path):
-        self._write_voc_results_file(path, all_boxes)
-        self._do_python_eval(path, output_dir)
+    def evaluate_detections(self, all_boxes, output_dir):
+        self._write_voc_results_file(all_boxes)
+        self._do_python_eval(output_dir)
 
     def competition_mode(self, on):
         if on:

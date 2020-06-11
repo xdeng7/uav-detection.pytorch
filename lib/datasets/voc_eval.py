@@ -12,25 +12,48 @@ import os
 import pickle
 import numpy as np
 
+category={0:'ignored regions', 1:'pedestrian', 2:'person', 3:'bicycle', 4:'car', 5:'van',
+                         6:'truck', 7:'tricycle', 8:'awning-tricycle', 9:'bus',
+                         10:'motor', 11:'others'}
 
 def parse_rec(filename):
     """ Parse a PASCAL VOC xml file """
-    tree = ET.parse(filename)
+    # tree = ET.parse(filename)
+    # objects = []
+    # for obj in tree.findall('object'):
+    #     obj_struct = {}
+    #     obj_struct['name'] = obj.find('name').text
+    #     obj_struct['pose'] = obj.find('pose').text
+    #     obj_struct['truncated'] = int(obj.find('truncated').text)
+    #     obj_struct['difficult'] = int(obj.find('difficult').text)
+    #     bbox = obj.find('bndbox')
+    #     obj_struct['bbox'] = [
+    #         int(bbox.find('xmin').text),
+    #         int(bbox.find('ymin').text),
+    #         int(bbox.find('xmax').text),
+    #         int(bbox.find('ymax').text)
+    #     ]
+    #     objects.append(obj_struct)
+
     objects = []
-    for obj in tree.findall('object'):
-        obj_struct = {}
-        obj_struct['name'] = obj.find('name').text
-        obj_struct['pose'] = obj.find('pose').text
-        obj_struct['truncated'] = int(obj.find('truncated').text)
-        obj_struct['difficult'] = int(obj.find('difficult').text)
-        bbox = obj.find('bndbox')
-        obj_struct['bbox'] = [
-            int(bbox.find('xmin').text),
-            int(bbox.find('ymin').text),
-            int(bbox.find('xmax').text),
-            int(bbox.find('ymax').text)
-        ]
-        objects.append(obj_struct)
+    with open(filename, 'r') as f:
+        objs = f.read().splitlines()
+
+        # # Load object bounding boxes into a data frame.
+        for _, obj in enumerate(objs):
+            obj_struct = {}
+            ann_info = obj.split(',')
+            xmin, ymin = float(ann_info[0]), float(ann_info[1])
+            w, h = float(ann_info[2]), float(ann_info[3])
+            xmax, ymax = xmin + w, ymin + h
+            cls_id = int(ann_info[5])
+
+            obj_struct['difficult'] = 0
+            obj_struct['bbox'] = [xmin,ymin, xmax, ymax]
+            obj_struct['name'] = category[cls_id]
+
+            objects.append(obj_struct)
+
 
     return objects
 

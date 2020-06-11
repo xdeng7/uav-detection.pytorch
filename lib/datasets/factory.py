@@ -41,7 +41,7 @@ for year in ['2015']:
 
 # Set up VisDrone_2019_<split>
 for year in ['2019']:
-    for split in ['train', 'val']:
+    for split in ['train', 'val', 'test']:
         name = 'visdrone_{}_{}'.format(year, split)
         __sets[name] = (lambda split=split, year=year: visdrone(split, year))
 
